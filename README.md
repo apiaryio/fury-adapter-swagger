@@ -46,3 +46,78 @@ Errors:
 Code | Description
 ---: | -----------
    1 | Error parsing input (e.g. malformed YAML).
+
+Result is a [minim](https://github.com/refractproject/refract-spec/blob/master/namespaces/api-description-namespace.md) - wrapper for [Refract](https://github.com/refractproject/refract-spec) instance.
+
+## Mapping and transformations
+
+Mapping and transformation from [Swagger 2.0](http://swagger.io/specification) to [API Description Refract Namesapce](https://github.com/refractproject/refract-spec/blob/master/namespaces/api-description-namespace.md)
+
+### Pre-process Swagger
+
+- *Dereferencing* [Reference objects][reference] in:
+  - [operation][operation] parameters
+  - [path][path] parameters
+  - [responses object][response] values
+  - operation object reference in [path][path]
+
+- *Dereferencing* JSON Schemas from [path](#pathsObject) [operation][operation] [parameter][parameters] type (`in`) `body`
+
+- *Dereferencing* JSON Schemas from [path][path] [operation][operation] [responses][response] schema object
+
+### Convert
+
+**From Swagger:**
+  - [Path Templates][path_templates] in each [path object][path]
+  - [operation][operation] parameters type (`in`) `path`
+  - [operation][operation] parameters type (`in`) `query`
+
+**Transform:** Convert to [URI Template](https://tools.ietf.org/html/rfc6570)
+
+**To Refract:** [resource][resource] `attributes.href` ([Href][href-type])
+
+- - -
+
+**From Swagger:** [operation][operation] `summary`
+
+**Transform:** None
+
+**To Refract:** [transition][transition] `meta.title`
+
+- - -
+
+**From Swagger:** [operation][operation] `description`
+
+**Transform:** None
+
+**To Refract:** [transition][transition] `content` ([Copy](https://github.com/refractproject/refract-spec/blob/master/namespaces/api-description-namespace.md#copy-element)) `content`
+
+- - -
+
+**From Swagger:** [operation][operation] `operationId`
+
+**Transform:** None
+
+**To Refract:** [transition][transition] `attributes.relation`
+
+- - -
+
+**From Swagger:**
+
+**Transform:** Empty string
+
+**To Refract:** [resource][resource] `meta.title`
+
+
+[path]: http://swagger.io/specification/#pathsObject
+[path_templates]: http://swagger.io/specification/#pathTemplating
+[operation]: http://swagger.io/specification/#operationObject
+[parameters]: http://swagger.io/specification/#parameterObject
+[responses]: http://swagger.io/specification/#responsesDefinitionsObject
+[response]: http://swagger.io/specification/#responseObject
+[reference]: http://swagger.io/specification/#referenceObject
+
+
+[resource]: https://github.com/refractproject/refract-spec/blob/master/namespaces/api-description-namespace.md#resource-element
+[transition]: https://github.com/refractproject/refract-spec/blob/master/namespaces/api-description-namespace.md#transition-element
+[href-type]: https://github.com/refractproject/refract-spec/blob/master/namespaces/api-description-namespace.md#href-string
