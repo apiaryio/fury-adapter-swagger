@@ -67,6 +67,67 @@ Mapping and transformation from [Swagger 2.0](http://swagger.io/specification) t
 
 ### Convert
 
+
+
+S: [Swagger Object](http://swagger.io/specification/#swaggerObject)
+
+T:
+
+R: [Category](https://github.com/refractproject/refract-spec/blob/master/namespaces/api-description-namespace.md#category-element)
+
+- - -
+
+S: http://swagger.io/specification/#infoObject
+
+contactObject
+licenseObject
+pathsObject
+pathItemObject
+operationObject
+externalDocumentationObject
+parameterObject
+itemsObject
+responsesObject
+responseObject
+headersObject
+exampleObject
+headerObject
+tagObject
+referenceObject
+schemaObject
+xmlObject
+definitionsObject
+parametersDefinitionsObject
+responsesDefinitionsObject
+securityDefinitionsObject
+securitySchemeObject
+scopesObject
+securityRequirementObject
+vendorExtensions
+
+T:
+
+R:
+
+- - -
+
+S:
+
+T:
+
+R:
+
+
+
+- - -
+
+S:
+
+T:
+
+R:
+
+
 **From Swagger:**
   - [Path Templates][path_templates] in each [path object][path]
   - [path item][path_item] parameters type (`in`) `path` inherited to [operation][operation] parameters type (`in`) `path`
@@ -108,6 +169,8 @@ Mapping and transformation from [Swagger 2.0](http://swagger.io/specification) t
 **Transform:** Empty string
 
 **To Refract:** [resource][resource] `meta.title`
+
+
 
 
 [path]: http://swagger.io/specification/#pathsObject
