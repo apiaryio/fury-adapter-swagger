@@ -69,12 +69,8 @@ Mapping and transformation from [Swagger 2.0](http://swagger.io/specification) t
 
 **From Swagger:**
   - [Path Templates][path_templates] in each [path object][path]
-  - [path item][path_item] parameters type (`in`) `path`
-  - [path item][path_item] parameters type (`in`) `query`
-  - [operation][operation] parameters type (`in`) `path`
-  - [operation][operation] parameters type (`in`) `query`
-
-
+  - [path item][path_item] parameters type (`in`) `path` inherited to [operation][operation] parameters type (`in`) `path`
+  - [path item][path_item] parameters type (`in`) `query` inherited to [operation][operation] parameters type (`in`) `query`
 
 
 **Transform:** Convert to [URI Template](https://tools.ietf.org/html/rfc6570)
