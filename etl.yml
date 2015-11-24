@@ -1,0 +1,59 @@
+---
+swagger_doc_url: http://swagger.io/specification/
+swagger_schema_url: http://swagger.io/v2/schema.json
+refract_doc_url: https://github.com/refractproject/refract-spec/blob/master/namespaces/api-description-namespace.md
+etl:
+-
+  swagger:
+    doc: '#swaggerObject'
+    scheme: '#/'
+  refract:
+    doc: '#category-element'
+    parent_element:
+    element: ['Category', {'class': 'api'}]
+    data:
+
+-
+ swagger:
+  -
+    doc: '#infoTitle'
+    scheme: '#/definitions/info/properties/title'
+
+ transformation:
+   -
+     doc:
+
+ refract:
+  -
+    doc: '#category-element'
+    refract:
+      parent_element: null
+      element: ['Category', {'classes': ['api']}]
+      data: /meta/title
+-
+ swagger:
+  -
+    doc: '#infoDescription'
+    scheme: '#/definitions/info/properties/description'
+
+ refract:
+  -
+    doc: '#copy-element'
+    refract:
+      parent_element: ['Category', {'classes':['api']}]
+      element: ['Copy', {'content-type': 'text/markdown'}]
+      data: /content
+-
+ swagger:
+  -
+    doc: '#operationDescription'
+    scheme: '#/definitions/operations/properties/description'
+
+ refract:
+  -
+    doc: '#copy-element'
+    refract:
+      parent_element: ['Transition']
+      element: ['Copy',{'content-type': 'text/markdown'}]
+      data: /content
+
