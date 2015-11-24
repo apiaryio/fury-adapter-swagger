@@ -19,6 +19,7 @@
   "dependencies": {
     "babel-runtime": "^5.8.20",
     "js-yaml": "^3.4.2",
+    "json-schema-faker": "^0.2.2",
     "json-schema-ref-parser": "^1.4.0",
     "underscore": "^1.8.3"
   },
