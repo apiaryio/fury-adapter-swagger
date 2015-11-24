@@ -2,6 +2,7 @@ import _ from 'underscore';
 import $RefParser from 'json-schema-ref-parser';
 import yaml from 'js-yaml';
 import buildUriTemplate from './uri-template';
+import jsonSchemaFaker from 'json-schema-faker';
 
 export const name = 'swagger';
 
@@ -109,6 +110,17 @@ function createAssetFromJsonSchema(minim, jsonSchema) {
   const schemaAsset = new Asset(JSON.stringify(jsonSchema));
   schemaAsset.classes.push('messageBodySchema');
   schemaAsset.attributes.set('contentType', 'application/schema+json');
+
+  return schemaAsset;
+}
+
+function createMessageBodyAssetFromJsonSchema(minim, jsonSchema) {
+  const Asset = minim.getElementClass('asset');
+  const messageBody = jsonSchemaFaker(jsonSchema)
+
+  const schemaAsset = new Asset(JSON.stringify(messageBody, null, 2));
+  schemaAsset.classes.push('messageBody');
+  schemaAsset.attributes.set('contentType', 'application/json');
 
   return schemaAsset;
 }
@@ -397,6 +409,11 @@ export function parse({minim, source}, done) {
             _.each(bodyParameters, (bodyParameter) => {
               const schemaAsset = createAssetFromJsonSchema(minim, bodyParameter.schema);
               request.content.push(schemaAsset);
+
+              if (bodyParameter.schema) {
+                const messageBody = createMessageBodyAssetFromJsonSchema(minim, bodyParameter.schema);
+                request.content.push(messageBody);
+              }
             });
 
             // Responses can have bodies
