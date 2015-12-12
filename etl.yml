@@ -1,59 +1,183 @@
----
+  ---
 swagger_doc_url: http://swagger.io/specification/
 swagger_schema_url: http://swagger.io/v2/schema.json
 refract_doc_url: https://github.com/refractproject/refract-spec/blob/master/namespaces/api-description-namespace.md
 etl:
--
-  swagger:
+
+# Swagger Object
+- swagger:
     doc: '#swaggerObject'
-    scheme: '#/'
+    schema: '#/'
   refract:
-    doc: '#category-element'
-    parent_element:
-    element: ['Category', {'class': 'api'}]
-    data:
-
--
- swagger:
-  -
-    doc: '#infoTitle'
-    scheme: '#/definitions/info/properties/title'
-
- transformation:
-   -
-     doc:
-
- refract:
-  -
     doc: '#category-element'
     refract:
       parent_element: null
-      element: ['Category', {'classes': ['api']}]
-      data: /meta/title
--
- swagger:
-  -
+      element: '["Category", {"class": "api"}]'
+      content: null
+
+## Fixed Fields
+### swagger
+- swagger:
+    doc: '#swaggerSwagger'
+    schema: '#/properties/swagger'
+  refract: null
+### info
+- swagger:
+    doc: 'swaggerInfo'
+    schema: '#/properties/info'
+  refract: null
+### host + schemes
+- swagger:
+  - doc: '#swaggerSchemes'
+    schema: '#/properties/schemes'
+  - doc: '#swaggerHost'
+    schema: '#/properties/host'
+  transformation: 'Takes first scheme from `schemes` and concacenates it with `host`'
+  refract:
+    doc: null
+    refract:
+      parent_element: null
+      element: '["category", {"classes": ["api"]}]'
+      content: '#/attributes/meta'
+### basePath
+- swagger:
+    doc: '#swaggerBasePath'
+    schema: '#/properties/basePath'
+  refract: null
+### consumes
+- swagger:
+    doc: '#swaggerConsumes'
+    schema: '#/properties/consumes'
+  refract: null
+### produces
+- swagger:
+    doc: '#swaggerProduces'
+    schema: '#/properties/produces'
+  refract: null
+### paths
+- swagger:
+    doc: '#swaggerPaths'
+    schema: '#/properties/paths'
+  refract: null
+### definitions
+- swagger:
+    doc: '#swaggerDefinitions'
+    schema: '#/properties/definitions'
+  refract: null
+### parameters
+- swagger:
+    doc: '#swaggerParameters'
+    schema: '#/properties/parameters'
+  refract: null
+### responses
+- swagger:
+    doc: '#swaggerResponses'
+    schema: '#/properties/responses'
+  refract: null
+### security
+- swagger:
+    doc: '#swaggerSecurity'
+    schema: '#/properties/security'
+  refract: null
+### securityDefinitions
+- swagger:
+    doc: '#swaggerSecurityDefinitions'
+    schema: '#/properties/securityDefinitions'
+  refract: null
+### tags
+- swagger:
+    doc: '#swaggerTags'
+    schema: '#/properties/tags'
+  refract: null
+### externalDocs
+- swagger:
+    doc: '#swaggerExternalDocs'
+    schema: '#/properties/externalDocs'
+
+# Info Object
+## Fixed Fields
+### title
+- swagger:
+    doc: '#infoTitle'
+    schema: '#/definitions/info/properties/title'
+  refract:
+    doc: null
+    refract:
+      parent_element: null
+      element: '["category", {"classes": ["api"]}]'
+      content: '#/meta/title'
+### description
+- swagger:
     doc: '#infoDescription'
-    scheme: '#/definitions/info/properties/description'
-
- refract:
-  -
-    doc: '#copy-element'
+    schema: '#/definitions/info/properties/description'
+  refract:
+    doc: null
     refract:
-      parent_element: ['Category', {'classes':['api']}]
-      element: ['Copy', {'content-type': 'text/markdown'}]
-      data: /content
--
- swagger:
-  -
-    doc: '#operationDescription'
-    scheme: '#/definitions/operations/properties/description'
+      parent_element: '["category", {"classes": ["api"]}]'
+      element: '["copy"]'
+      content: '#/content'
+### infoTermsOfService
+- swagger:
+    doc: '#infoTermsOfService'
+    schema: '#/definitions/info/properties/termsOfService'
+  refract: null
+### contact
+- swagger:
+    doc: '#infoContact'
+    schema: '#/definitions/info/properties/contact'
+  refract: null
+### license
+- swagger:
+    doc: '#infoLicense'
+    schema: '#/definitions/info/properties/license'
+  refract: null
+### version
+- swagger:
+    doc: '#infoVersion'
+    schema: '#/definitions/info/properties/version'
+# Content Object
+## Fixed Fields
+### name
+- swagger:
+    doc: '#contactName'
+    schema: '#/definitions/contact/properties/name'
+  refract: null
+### url
+- swagger:
+    doc: '#contactUrl'
+    schema: '#/definitions/contact/properties/name'
+  refract: null
+### email
+- swagger:
+    doc: '#contactEmail'
+    schema: '#/definitions/contact/properties/email'
+  refract: null
 
- refract:
-  -
-    doc: '#copy-element'
-    refract:
-      parent_element: ['Transition']
-      element: ['Copy',{'content-type': 'text/markdown'}]
-      data: /content
+# License Object
+## Fixed Fields
+### name
+- swagger:
+    doc: '#licenseName'
+    schema: '#/definitions/license/properties/name'
+  refract: null
+### url
+- swagger:
+    doc: '#licenseUrl'
+    schema: '#/definitions/License/properties/url'
+  refract: null
 
+# Paths Object
+## Patterned Fields
+### /{path}
+- swagger:
+    doc: '#pathsPath'
+    schema: '#/definitions/paths/patternProperties/^\/'
+  refract: null
+
+# Path Item Object
+## Fixed Fields
+### $ref (src/adapter.js#130)
+- swagger:
+    doc: '#pathItemRef'
+    schema: '#/definitions/pathItem/properties/$ref'
+  refract:
