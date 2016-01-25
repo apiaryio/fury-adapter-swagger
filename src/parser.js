@@ -351,12 +351,14 @@ export default class Parser {
       if (pathObjectParameters.length > 0) {
         pathObjectParameters.forEach((parameter, index) => {
           this.withPath('parameters', index, (path) => {
-            if (parameter.in === 'body') {
-              this.createAnnotation(ANNOTATIONS.DATA_LOST, path,
-                'Path-level body parameters are not yet supported');
-            } else if (parameter.in === 'formData') {
-              this.createAnnotation(ANNOTATIONS.DATA_LOST, path,
-                'Path-level form data parameters are not yet supported');
+            if (parameter) {
+              if (parameter.in === 'body') {
+                this.createAnnotation(ANNOTATIONS.DATA_LOST, path,
+                  'Path-level body parameters are not yet supported');
+              } else if (parameter.in === 'formData') {
+                this.createAnnotation(ANNOTATIONS.DATA_LOST, path,
+                  'Path-level form data parameters are not yet supported');
+              }
             }
           });
         });
@@ -862,7 +864,7 @@ export default class Parser {
       this.withPath('parameters', index, () => {
         let member;
 
-        if (parameter.in === 'query' || parameter.in === 'path') {
+        if (parameter && (parameter.in === 'query' || parameter.in === 'path')) {
           member = this.convertParameterToMember(parameter);
           hrefVariables.content.push(member);
         }

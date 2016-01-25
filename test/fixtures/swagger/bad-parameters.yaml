@@ -1,0 +1,13 @@
+swagger: '2.0'
+info:
+  title: Bad Parameters
+  version: '1.0'
+paths:
+  '/':
+    get:
+      responses:
+        200:
+          examples:
+            foo: t
+    parameters:
+      -
