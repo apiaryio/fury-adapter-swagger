@@ -1,5 +1,6 @@
 # Master
 
+- Added authentication support
 - Fixed metadata not being an array of Member Elements
 - Added source maps to resource.href, httpRequest.method, httpResponse.statusCode
 - Removed several unneeded source maps
