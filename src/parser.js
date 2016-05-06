@@ -311,14 +311,227 @@ export default class Parser {
     }
   }
 
+  // Conver api key name into Refract elements
+  apiKeyName(element, apiKey) {
+    const {Member: MemberElement} = this.minim.elements;
+    let config;
+
+    if (apiKey.in === 'query') {
+      config = 'queryParameterName';
+    } else if (apiKey.in === 'header') {
+      config = 'httpHeaderName';
+    }
+
+    const member = new MemberElement(config, apiKey.name);
+
+    if (this.generateSourceMap) {
+      this.createSourceMap(member, this.path.concat(['name']));
+    }
+
+    element.content.push(member);
+  }
+
+  // Convert Oauth2 flow into Refract elements
+  oauthGrantType(element, flow) {
+    const {Member: MemberElement} = this.minim.elements;
+    let grantType = flow;
+
+    if (flow === 'password') {
+      grantType = 'resource owner password credentials';
+    } else if (flow === 'application') {
+      grantType = 'client credentials';
+    } else if (flow === 'accessCode') {
+      grantType = 'authorization code';
+    }
+
+    const member = new MemberElement('grantType', grantType);
+
+    if (this.generateSourceMap) {
+      this.createSourceMap(member, this.path.concat(['flow']));
+    }
+
+    element.content.push(member);
+  }
+
+  // Convert OAuth2 scopes into Refract elements
+  oauthScopes(element, items) {
+    const {Member: MemberElement, Array: ArrayElement, String: StringElement} = this.minim.elements;
+    const scopes = new ArrayElement();
+    let descriptions = null;
+    let scopesList = items;
+
+    if (_.isObject(items) && !_.isArray(items)) {
+      descriptions = Object.values(items);
+      scopesList = Object.keys(items);
+    }
+
+    // If value is not an empty array, then they are scopes
+    scopesList.forEach((scopeName, index) => {
+      const scope = new StringElement(scopeName);
+
+      if (descriptions) {
+        scope.description = descriptions[index];
+
+        if (this.generateSourceMap) {
+          this.createSourceMap(scope.meta.get('description'), this.path.concat([scopeName]));
+        }
+      }
+
+      if (this.generateSourceMap) {
+        const value = descriptions ? scopeName : index;
+        this.createSourceMap(scope, this.path.concat([value]));
+      }
+
+      scopes.content.push(scope);
+    });
+
+    if (scopes.length) {
+      element.content.push(new MemberElement('scopes', scopes));
+    }
+  }
+
+  // Conver OAuth2 transition information into Refract elements
+  oauthTransitions(element, oauth) {
+    const {Transition} = this.minim.elements;
+
+    if (oauth.authorizationUrl) {
+      const transition = new Transition();
+
+      transition.relation = 'authorize';
+      transition.href = oauth.authorizationUrl;
+
+      if (this.generateSourceMap) {
+        this.createSourceMap(transition.attributes.get('href'), this.path.concat(['authorizationUrl']));
+        this.createSourceMap(transition.attributes.get('relation'), this.path.concat(['authorizationUrl']));
+      }
+
+      element.content.push(transition);
+    }
+
+    if (oauth.tokenUrl) {
+      const transition = new Transition();
+
+      transition.relation = 'token';
+      transition.href = oauth.tokenUrl;
+
+      if (this.generateSourceMap) {
+        this.createSourceMap(transition.attributes.get('href'), this.path.concat(['tokenUrl']));
+        this.createSourceMap(transition.attributes.get('relation'), this.path.concat(['tokenUrl']));
+      }
+
+      element.content.push(transition);
+    }
+  }
+
   // Convert a Swagger auth object into Refract elements.
   handleSwaggerAuth() {
-    for (const attribute of ['securityDefinitions', 'security']) {
+    const {Category, AuthScheme} = this.minim.elements;
+    const schemes = [];
+
+    if (this.swagger.securityDefinitions) {
+      Object.keys(this.swagger.securityDefinitions).forEach((name) => {
+        this.withPath('securityDefinitions', name, () => {
+          const item = this.swagger.securityDefinitions[name];
+          const element = new AuthScheme();
+
+          switch (item.type) {
+          case 'basic':
+            element.element = 'Basic Authentication Scheme';
+            break;
+
+          case 'apiKey':
+            element.element = 'Token Authentication Scheme';
+            this.apiKeyName(element, item);
+            break;
+
+          case 'oauth2':
+            element.element = 'OAuth2 Scheme';
+            this.oauthGrantType(element, item.flow);
+
+            if (item.scopes) {
+              this.withPath('scopes', () => {
+                this.oauthScopes(element, item.scopes);
+              });
+            }
+
+            this.oauthTransitions(element, item);
+            break;
+
+          default:
+            break;
+          }
+
+          element.id = name;
+
+          if (this.generateSourceMap) {
+            this.createSourceMap(element.meta.get('id'), this.path);
+          }
+
+          if (item['x-summary']) {
+            element.title = item['x-summary'];
+
+            if (this.generateSourceMap) {
+              this.createSourceMap(element.meta.get('title'), this.path.concat(['x-summary']));
+            }
+          }
+
+          if (item.description) {
+            element.description = item.description;
+
+            if (this.generateSourceMap) {
+              this.createSourceMap(element.meta.get('description'), this.path.concat(['description']));
+            }
+          }
+
+          schemes.push(element);
+        });
+      });
+    }
+
+    if (schemes.length) {
+      const category = new Category();
+
+      category.meta.set('classes', ['authSchemes']);
+      category.content = schemes;
+
+      this.api.content.push(category);
+    }
+
+    for (const attribute of ['security']) {
       if (this.swagger[attribute]) {
         this.createAnnotation(ANNOTATIONS.DATA_LOST, [attribute],
           'Authentication information is not yet supported');
       }
     }
+  }
+
+  handleSwaggerTransitionAuth(methodValue) {
+    const {AuthScheme} = this.minim.elements;
+    const schemes = [];
+
+    if (!methodValue.security) {
+      return schemes;
+    }
+
+    methodValue.security.forEach((item, index) => {
+      Object.keys(item).forEach((name) => {
+        this.withPath('security', index, name, () => {
+          const element = new AuthScheme();
+
+          // If value is not an empty array, then they are scopes
+          this.oauthScopes(element, item[name]);
+
+          if (this.generateSourceMap) {
+            this.createSourceMap(element, this.path);
+          }
+
+          element.element = name;
+          schemes.push(element);
+        });
+      });
+    });
+
+    return schemes;
   }
 
   // Convert a Swagger path into a Refract resource.
@@ -414,6 +627,8 @@ export default class Parser {
     resource.content.push(transition);
 
     this.withPath(method, () => {
+      const schemes = this.handleSwaggerTransitionAuth(methodValue);
+
       if (methodValue.externalDocs) {
         this.withPath('externalDocs', (path) => {
           this.createAnnotation(ANNOTATIONS.DATA_LOST, path,
@@ -492,14 +707,14 @@ export default class Parser {
           // refactor the code below as this is a little weird.
           relevantResponses.null = {};
         } else {
-          this.createTransaction(transition, method);
+          this.createTransaction(transition, method, schemes);
         }
       }
 
       // Transactions are created for each response in the document
       _.each(relevantResponses, (responseValue, statusCode) => {
         this.handleSwaggerResponse(resource, transition, method,
-          methodValueParameters, responseValue, statusCode);
+          methodValueParameters, responseValue, statusCode, schemes);
       });
 
       return transition;
@@ -507,7 +722,7 @@ export default class Parser {
   }
 
   // Convert a Swagger response & status code into Refract transactions.
-  handleSwaggerResponse(resource, transition, method, transitionParameters, responseValue, statusCode) {
+  handleSwaggerResponse(resource, transition, method, transitionParameters, responseValue, statusCode, schemes) {
     let examples;
 
     if (responseValue.examples) {
@@ -526,7 +741,7 @@ export default class Parser {
     examples = _.omit(examples, 'schema');
 
     _.each(examples, (responseBody, contentType) => {
-      const transaction = this.createTransaction(transition, method);
+      const transaction = this.createTransaction(transition, method, schemes);
       const request = transaction.request;
 
       this.handleSwaggerExampleRequest(transitionParameters, request);
@@ -962,7 +1177,7 @@ export default class Parser {
   }
 
   // Create a new Refract transition element with a blank request and response.
-  createTransaction(transition, method) {
+  createTransaction(transition, method, schemes) {
     const {HttpRequest, HttpResponse, HttpTransaction} = this.minim.elements;
     const transaction = new HttpTransaction();
     transaction.content = [new HttpRequest(), new HttpResponse()];
@@ -977,6 +1192,10 @@ export default class Parser {
       if (this.generateSourceMap) {
         this.createSourceMap(transaction.request.attributes.get('method'), this.path);
       }
+    }
+
+    if (schemes.length) {
+      transaction.attributes.set('authSchemes', schemes);
     }
 
     return transaction;
