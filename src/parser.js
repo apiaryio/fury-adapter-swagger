@@ -25,6 +25,9 @@ export default class Parser {
     this.source = source;
     this.generateSourceMap = generateSourceMap;
 
+    // Global scheme requirements
+    this.globalSchemes = [];
+
     // Loaded, dereferenced Swagger API
     this.swagger = null;
     // Refract parse result
@@ -340,7 +343,7 @@ export default class Parser {
     }
 
     // If value is not an empty array, then they are scopes
-    scopesList.forEach((scopeName, index) => {
+    _.each(scopesList, (scopeName, index) => {
       const scope = new StringElement(scopeName);
 
       if (descriptions) {
@@ -403,7 +406,7 @@ export default class Parser {
     const schemes = [];
 
     if (this.swagger.securityDefinitions) {
-      Object.keys(this.swagger.securityDefinitions).forEach((name) => {
+      _.each(_.keys(this.swagger.securityDefinitions), (name) => {
         this.withPath('securityDefinitions', name, () => {
           const item = this.swagger.securityDefinitions[name];
           const element = new AuthScheme();
@@ -471,24 +474,18 @@ export default class Parser {
       this.api.content.push(category);
     }
 
-    for (const attribute of ['security']) {
-      if (this.swagger[attribute]) {
-        this.createAnnotation(annotations.DATA_LOST, [attribute],
-          'Authentication information is not yet supported');
-      }
+    if (!this.swagger.security) {
+      return;
     }
+
+    this.handleSwaggerSecurity(this.swagger.security, this.globalSchemes);
   }
 
-  handleSwaggerTransitionAuth(methodValue) {
+  handleSwaggerSecurity(security, schemes) {
     const {AuthScheme} = this.minim.elements;
-    const schemes = [];
 
-    if (!methodValue.security) {
-      return schemes;
-    }
-
-    methodValue.security.forEach((item, index) => {
-      Object.keys(item).forEach((name) => {
+    _.each(security, (item, index) => {
+      _.each(_.keys(item), (name) => {
         this.withPath('security', index, name, () => {
           const element = new AuthScheme();
 
@@ -504,6 +501,16 @@ export default class Parser {
         });
       });
     });
+  }
+
+  handleSwaggerTransitionAuth(methodValue) {
+    const schemes = [];
+
+    if (!methodValue.security) {
+      return this.globalSchemes;
+    }
+
+    this.handleSwaggerSecurity(methodValue.security, schemes);
 
     return schemes;
   }
@@ -566,7 +573,7 @@ export default class Parser {
 
       // TODO: It should add support for `body` and `formData` parameters as well.
       if (pathObjectParameters.length > 0) {
-        pathObjectParameters.forEach((parameter, index) => {
+        _.each(pathObjectParameters, (parameter, index) => {
           this.withPath('parameters', index, (path) => {
             if (parameter.in === 'body') {
               this.createAnnotation(annotations.DATA_LOST, path,
@@ -975,8 +982,8 @@ export default class Parser {
         this.group.title = name;
         this.group.classes.push('resourceGroup');
 
-        if (this.swagger.tags && this.swagger.tags.forEach) {
-          this.swagger.tags.forEach((tag) => {
+        if (this.swagger.tags && _.isArray(this.swagger.tags)) {
+          _.each(this.swagger.tags, (tag) => {
             // TODO: Check for external docs here?
             if (tag.name === name && tag.description) {
               this.group.content.push(new Copy(tag.description));
@@ -1121,7 +1128,7 @@ export default class Parser {
     const {HrefVariables} = this.minim.elements;
     const hrefVariables = new HrefVariables();
 
-    params.forEach((parameter, index) => {
+    _.each(params, (parameter, index) => {
       this.withPath('parameters', index, () => {
         let member;
 
