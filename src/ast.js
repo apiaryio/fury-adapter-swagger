@@ -62,8 +62,17 @@ export default class Ast {
 
         if (!pieces.length) {
           // This is the last item!
-          start = newNode.start_mark.pointer;
-          end = newNode.end_mark.pointer;
+
+          if (!newNode && piece > 0 && node.value[piece - 1]) {
+            // Element in sequence does not exist. It could have been empty
+            // Let's provide the end of previous element
+            const previousNode = node.value[piece - 1];
+            start = previousNode.end_mark.pointer;
+            end = start + 1;
+          } else {
+            start = newNode.start_mark.pointer;
+            end = newNode.end_mark.pointer;
+          }
         }
       } else {
         // Unknown piece, which will just return no source map.
