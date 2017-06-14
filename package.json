@@ -9,7 +9,7 @@
     "url": "https://github.com/apiaryio/fury-adapter-swagger.git"
   },
   "scripts": {
-    "test": "peasant test",
+    "test": "mocha",
     "ci": "peasant -s lint test build",
     "prepublish": "npm run ci",
     "cover": "peasant cover",
