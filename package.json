@@ -27,6 +27,8 @@
   },
   "devDependencies": {
     "babel-plugin-array-includes": "^2.0.3",
+    "babel-plugin-transform-runtime": "^6.23.0",
+    "babel-preset-env": "^1.5.2",
     "chai": "^3.2.0",
     "fury": "3.0.0-beta.0",
     "glob": "^7.1.1",
