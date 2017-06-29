@@ -1,0 +1,1320 @@
+swagger: '2.0'
+info:
+  version: '0.0.1'
+  title: '[HERO] Mobile Gateway Orders API'
+  description: |
+    The API provides access to resources required to place an order and perform a checkout/payment
+    used in HERO mobile application. The typical flow is to fill a shopping cart (basket) with
+    items to be purchased and generate an order out of it. For the order to be placed a payment
+    must be made and referenced in the order. (gw-orders-app)
+    
+    Note that almost all operations return the whole basket as each single call might impact or change
+    the overall state of the basket and payment process.
+    
+# during dev, should point to your local machine
+host: localhost:10010
+basePath: /gw-api/v1
+# 
+schemes:
+  - http
+
+produces:
+  - application/hal+json      # Representation message format
+  - application/problem+json  # Error message format
+
+paths:
+  /:
+    x-summary: API Root
+
+    get:
+      summary: Retrieve API Root
+      description: The API Root contains the initial set of link relations.
+      responses:
+        200:
+          description: The root of the API
+          schema:
+            $ref: '#/definitions/hal_root'
+
+# BASKET CREATION
+  /basket:
+    x-summary: Create Basket
+
+    post:
+      summary: Create Basket
+      description: |
+        Create a new basket. A valid (orderable) basket is defined of a 
+        `customer_info`, `shipping_info`, `billing_info` and 
+        `payment_info` additionally to the `items`. Further a voucher could be provided.
+        Each of the `*_info` objects can optionaly be defined by a `reference_id` 
+        that uniquely identifies the object. All further properties could also be added 
+        after creation via the coresponding `PUT` calls. 
+        Posting a basket results always in a new basket beeing created!
+        
+        The payment_info contains either the encryped card details as `payment_card_encrypted`
+        or the `payment_info_reference_id` which identifies an saved (recurring) card.
+      consumes:
+        - application/json
+      parameters:
+        - name: basket_creation
+          in: body
+          description: Optional items to initially put into basket.
+          required: true
+          schema:
+            $ref: '#/definitions/basket_creation'
+      responses:
+        201:
+          description: Newly created basket
+          schema:
+            $ref: '#/definitions/hal_basket'
+
+# MANAGE BASKET
+  /basket/{basket_id}:
+    x-summary: Manage Basket
+
+    parameters:
+      - name: basket_id
+        in: path
+        description: Id of the Basket
+        required: true
+        type: string
+        x-example: 'AEX93JGDDH39472'
+
+    get:
+      summary: Get Basket
+      description: |
+        Gets all information of the current basket.
+      responses:
+        200:
+          description: A particular Basket
+          schema:
+            $ref: '#/definitions/hal_basket'
+
+        404:
+          description: The request Basket wasn't found
+          headers:
+            Content-Type:
+              type: string
+              default: application/problem+json
+          schema:
+            $ref: '#/definitions/basket_not_found'
+    
+    put:
+      summary: Modify Basket
+      description: |
+        Modifies the properties of the basket 
+        by replacing the provided attribute only. For deleting
+        an property an explicit `DELETE` call is required or
+        a new basket has to be created via `POST` to start over.
+      
+      parameters:
+      - name: basket_attribute
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/basket_creation'
+          
+      consumes:
+      - application/json
+      
+      responses:
+        200:
+          description: A particular Basket
+          schema:
+            $ref: '#/definitions/hal_basket'
+
+        404:
+          description: The request Basket wasn't found
+          headers:
+            Content-Type:
+              type: string
+              default: application/problem+json
+          schema:
+            $ref: '#/definitions/basket_not_found'
+
+
+ # CUSTOMET_INFO             
+  /basket/{basket_id}/customer_info:
+      x-summary: Add Customer Info To Basket
+      
+      parameters:
+        - name: basket_id
+          in: path
+          description: Id of the Basket
+          required: true
+          type: string
+          x-example: 'AEX93JGDDH39472'
+  
+      put:
+        summary: Add Customer Info To Basket
+        description: |
+          Adds the provided `customer_info` into the basket.
+        
+        parameters:
+        - name: customer_info
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/customer_info'
+            
+        consumes:
+        - application/json
+        
+        responses:
+          200:
+            description: The updated Basket
+            schema:
+              $ref: '#/definitions/hal_basket'
+  
+          404:
+            description: The request Basket wasn't found
+            headers:
+              Content-Type:
+                type: string
+                default: application/problem+json
+            schema:
+              $ref: '#/definitions/basket_not_found'
+      
+      delete:
+        summary: Delete Customer Info From Basket
+        description: |
+          Delete the `customer_info` from the basket.
+
+        responses:
+          200:
+            description: The updated Basket
+            schema:
+              $ref: '#/definitions/hal_basket'      
+
+# SHIPPING
+  /basket/{basket_id}/shipping_info:
+      x-summary: Add Shipping Info To Basket
+      
+      parameters:
+        - name: basket_id
+          in: path
+          description: Id of the Basket
+          required: true
+          type: string
+          x-example: 'AEX93JGDDH39472'
+  
+      put:
+        summary: Add Shipping Info To Basket
+        description: |
+          Adds the provided `shipping_info` into the basket.
+        
+        parameters:
+        - name: shipping_info
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/shipping_info'
+            
+        consumes:
+        - application/json
+        
+        responses:
+          200:
+            description: The updated Basket
+            schema:
+              $ref: '#/definitions/hal_basket'
+  
+          404:
+            description: The request Basket wasn't found
+            headers:
+              Content-Type:
+                type: string
+                default: application/problem+json
+            schema:
+              $ref: '#/definitions/basket_not_found'
+
+      delete:
+        summary: Delete Shipping Info From Basket
+        description: |
+          Delete the `shipping_info` from the basket.
+
+        responses:
+          200:
+            description: The updated Basket
+            schema:
+              $ref: '#/definitions/hal_basket'
+
+# BILLING
+  /basket/{basket_id}/billing_info:
+      x-summary: Add Billing Info To Basket
+      
+      parameters:
+        - name: basket_id
+          in: path
+          description: Id of the Basket
+          required: true
+          type: string
+          x-example: 'AEX93JGDDH39472'
+  
+      put:
+        summary: Add Billing Info To Basket
+        description: |
+          Adds the provided `billing_info` into the basket.
+        
+        parameters:
+        - name: billing_info
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/billing_info'
+            
+        consumes:
+        - application/json
+        
+        responses:
+          200:
+            description: The updated Basket
+            schema:
+              $ref: '#/definitions/hal_basket'
+  
+          404:
+            description: The request Basket wasn't found
+            headers:
+              Content-Type:
+                type: string
+                default: application/problem+json
+            schema:
+              $ref: '#/definitions/basket_not_found'
+
+      delete:
+        summary: Delete Billing Info From Basket
+        description: |
+          Delete the `billing_info` from the basket.
+
+        responses:
+          200:
+            description: The updated Basket
+            schema:
+              $ref: '#/definitions/hal_basket'
+
+
+# PAYMENT
+  /basket/{basket_id}/payment_info:
+      x-summary: Add Payment Info To Basket
+      
+      parameters:
+        - name: basket_id
+          in: path
+          description: Id of the Basket
+          required: true
+          type: string
+          x-example: 'AEX93JGDDH39472'
+  
+      put:
+        summary: Add Payment Info To Basket
+        description: |
+          Adds the provided `payment_info` into the basket.
+        
+        parameters:
+        - name: payment_info
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/payment_info'
+            
+        consumes:
+        - application/json
+        
+        responses:
+          200:
+            description: The updated Basket
+            schema:
+              $ref: '#/definitions/hal_basket'
+  
+          404:
+            description: The request Basket wasn't found
+            headers:
+              Content-Type:
+                type: string
+                default: application/problem+json
+            schema:
+              $ref: '#/definitions/basket_not_found'
+
+      delete:
+        summary: Delete Payment Info From Basket
+        description: |
+          Delete the `payment_info` from the basket.
+
+        responses:
+          200:
+            description: The updated Basket
+            schema:
+              $ref: '#/definitions/hal_basket'
+
+              
+ # ITEMS
+  /basket/{basket_id}/items:
+      x-summary: Add Items To Basket
+      
+      parameters:
+        - name: basket_id
+          in: path
+          description: Id of the Basket
+          required: true
+          type: string
+          x-example: 'AEX93JGDDH39472'
+  
+      post:
+        summary: Add Items To Basket
+        description: |
+          Adds the provided `items` into the basket.
+        
+        parameters:
+        - name: items
+          in: body
+          required: true
+          schema:
+            type: object
+            properties:
+              items:
+                type: array
+            example:
+              items:
+              - $ref: '#/definitions/basket_item/example'
+            
+        consumes:
+        - application/json
+        
+        responses:
+          200:
+            description: The updated Basket
+            schema:
+              $ref: '#/definitions/hal_basket'
+  
+          404:
+            description: The request Basket wasn't found
+            headers:
+              Content-Type:
+                type: string
+                default: application/problem+json
+            schema:
+              $ref: '#/definitions/basket_not_found'
+    
+      delete:
+        summary: Delete All Items From Basket
+        description: |
+          Delete all `items` from the basket leaving the basket empty.
+
+        responses:
+          200:
+            description: The updated Basket
+            schema:
+              $ref: '#/definitions/hal_basket'    
+              
+  /basket/{basket_id}/items/{item_id}:
+      x-summary: Manage Items In Basket
+      
+      parameters:
+        - name: basket_id
+          in: path
+          description: Id of the Basket
+          required: true
+          type: string
+          x-example: 'AEX93JGDDH39472'
+        - name: item_id
+          in: path
+          description: Id of the item
+          required: true
+          type: string
+          x-example: '7d9124c67c03f9819a3d627a29'
+          
+      put:
+        summary: Update Specific Item
+        description: |
+          Updates the specified item by replacing the existing one identified by 
+          `item_id`. 
+          
+          If a new `product` is provided it means that the previous product
+          with the specified `item_id` was removed from the basket.
+          
+          Main use case of this call is for example to change the quantity of an item.
+        
+        parameters:
+        - name: item
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/basket_item'
+            
+        consumes:
+        - application/json
+        
+        responses:
+          200:
+            description: The updated Basket
+            schema:
+              $ref: '#/definitions/hal_basket'
+              
+          404:
+            description: The specified Item wasn't found
+            headers:
+              Content-Type:
+                type: string
+                default: application/problem+json
+            schema:
+              $ref: '#/definitions/item_not_found'
+              
+      delete:
+        summary: Delete Specific Item
+        description: |
+          Delete the specified item from the basket.
+
+        responses:
+          200:
+            description: The updated Basket
+            schema:
+              $ref: '#/definitions/hal_basket'
+              
+  
+  /basket/{basket_id}/voucher:
+      x-summary: Apply Voucher For Basket
+      
+      parameters:
+        - name: basket_id
+          in: path
+          description: Id of the Basket
+          required: true
+          type: string
+          x-example: 'AEX93JGDDH39472'
+  
+      put:
+        summary: Apply Voucher To Basket
+        description: |
+          Applies the provided voucher for the basket. This results in a complete recalculation
+          of the basket if the voucher was valid and could be applied.
+        
+        parameters:
+        - name: voucher
+          in: body
+          required: true
+          schema:
+            type: object
+            properties:
+              voucher_code:
+                type: string
+            example:
+              voucher_code: 'BAX-374-EJVF-123-123'
+            
+        consumes:
+        - application/json
+        
+        responses:
+          200:
+            description: The updated Basket
+            schema:
+              $ref: '#/definitions/hal_basket'
+  
+          404:
+            description: The request Basket wasn't found
+            headers:
+              Content-Type:
+                type: string
+                default: application/problem+json
+            schema:
+              $ref: '#/definitions/basket_not_found'
+  
+      delete:
+        summary: Delete Voucher From Basket
+        description: |
+          Removes the applied voucher from the basket.
+            
+        responses:
+          200:
+            description: The updated Basket
+            schema:
+              $ref: '#/definitions/hal_basket'
+  
+          404:
+            description: The request Basket wasn't found
+            headers:
+              Content-Type:
+                type: string
+                default: application/problem+json
+            schema:
+              $ref: '#/definitions/basket_not_found'
+  
+# ORDER
+  /basket/{basket_id}/order:
+    x-summary: Place An Order For Basket
+    
+    parameters:
+      - name: basket_id
+        in: path
+        description: 'Id of the Basket'
+        required: true
+        type: string
+        x-example: 'AEX93JGDDH39472'
+      - name: payment_reference
+        in: body
+        description: 'Payment reference retrieved from the payment process.'
+        required: true
+        schema:
+          type: object
+          properties:
+            card_cvc:
+              type: string
+          example:
+            card_cvc: '737'
+    post:
+      summary: Order Basket
+      description: |
+        Creates and places an order from the basket by providing 
+        a payment reference retrieved from the payment process.
+          
+      consumes:
+      - application/json
+      
+      responses:
+        200:
+          description: '3d secure payment authorization required'
+          schema:
+            $ref: '#/definitions/3d_secure_hal'
+        201:
+          description: 'Order successfully placed and payment authorized'
+          schema:
+            $ref: '#/definitions/order_hal'
+
+        404:
+          description: The request Basket wasn't found
+          headers:
+            Content-Type:
+              type: string
+              default: application/problem+json
+          schema:
+            $ref: '#/definitions/basket_not_found'
+
+  
+  /orders/{order_number}/authorize:
+    x-summary: Authorize An Order For ThreeD Payment
+    
+    parameters:
+      - name: order_number
+        in: path
+        description: 'Order number'
+        required: true
+        type: string
+        x-example: 'ANL923470238946'
+      
+      - name: native_callback
+        in: query
+        description: 'Native callback name'
+        required: true
+        type: string
+        x-example: 'onAuthorized'
+        
+      - name: md
+        in: formData
+        description: 'md from 3d banking'
+        required: true
+        type: string
+        x-example: 'kUpK5WtfVWhFSLq8DdovBny...'
+        
+      - name: paRes
+        in: formData
+        description: 'md from 3d banking'
+        required: true
+        type: string
+        x-example: 'kUpK5WtfVWhFSLq8DdovBny...'        
+        
+    post:
+      summary: Authorize ThreeD Payment
+      description: |
+        Authorizes an 3d payment. This call is Adyen 3d payment flow specific.
+        It should not be necessary to call it explicitly from the mobile clients.
+        This POST will be invoked by the 3d secure banking form.
+          
+      consumes:
+      - multipart/form-data
+      
+      responses:
+        200:
+          description: 'Response of Order placement and payment authorization'
+          headers:
+            Content-Type:
+              type: string
+              default: text/html
+          examples:
+            text/html: 
+              '<html><body>HTML & JS triggering a native function (onAuthorized) based on result!</body></html>'
+        404:
+          description: The request Order wasn't found
+          headers:
+            Content-Type:
+              type: string
+              default: application/problem+json
+          schema:
+            $ref: '#/definitions/order_not_found'  
+    
+  
+  /orders/{order_number}:
+    x-summary: Show An Order
+    
+    parameters:
+      - name: order_number
+        in: path
+        description: 'Id of the Order'
+        required: true
+        type: string
+        x-example: 'ANL923470238946'
+    get:
+      summary: Order Information
+      description: |
+        Retrieves the detailed information of a placed order. 
+      
+      responses:
+        200:
+          description: 'Order information'
+          schema:
+            $ref: '#/definitions/order_hal'
+        404:
+          description: The request Order wasn't found
+          headers:
+            Content-Type:
+              type: string
+              default: application/problem+json
+          schema:
+            $ref: '#/definitions/order_not_found'
+
+# PAYMENT CARD
+  /payments/customer/{customer_id}/cards:
+    x-summary: List Saved Credit Cards
+    
+    parameters:
+      - name: customer_id
+        in: path
+        description: 'Unique identifier of the Customer'
+        required: true
+        type: string
+        x-example: '01874548202'
+    get:
+      summary: Get Available Credit Cards
+      description: |
+        Gets all credit cards of the customer saved in the payment system.
+      responses:
+        200:
+          description: A List of Credit Cards
+          schema:
+            $ref: '#/definitions/hal_payment_cards'
+
+        404:
+          description: The requested cards were not found
+          headers:
+            Content-Type:
+              type: string
+              default: application/problem+json
+          schema:
+            $ref: '#/definitions/cards_not_found'
+
+definitions:
+  #
+  # API Root
+  #
+  hal_root:
+    type: object
+    allOf:
+      - $ref: '#/definitions/hal_resource'
+    example:
+      _links:
+        self:
+          href: /
+        basket:
+          href: /basket
+
+  address:
+    type: object
+    properties:
+      address_reference_id:
+        type: string
+      name:
+        type: string
+      first_name:
+        type: string
+      last_name:
+        type: string
+      address1:
+        type: string
+      address2:
+        type: string
+      house_number:
+        type: string
+      apartment_number:
+          type: string
+      phone:
+        type: string
+      postal_code:
+        type: string
+      city:
+        type: string
+      state_province:
+        type: string
+      country_code:
+        type: string
+  
+  shipping_info:
+    type: object
+    allOf:
+      - $ref: '#/definitions/address'
+    properties:
+      shipping_method:
+        type: string
+    example:
+      address_reference_id: '2'
+      name: 'Adi (shipping)'
+      first_name: 'Adi'
+      last_name: 'Dassler'
+      phone: '+44 20 7493 1886'
+      address1: '415-419 Oxford St'
+      house_number: '9b'
+      apartment_number: '16'
+      postal_code: 'W1C 2PG'
+      city: 'London'
+      country_code: 'UK'
+      state_province: 'None'
+      shipping_method: 'Standard'
+  
+  billing_info:
+    type: object
+    allOf:
+      - $ref: '#/definitions/address'
+    example:
+      address_reference_id: '3'
+      name: 'Adi (billing)'
+      first_name: 'Adi'
+      last_name: 'Dassler'
+      phone: '+44 20 7493 1886'
+      address1: '415-419 Oxford St'
+      house_number: '9b'
+      apartment_number: '16'
+      postal_code: 'W1C 2PG'
+      city: 'London'
+      country_code: 'UK'
+      
+  customer_info:
+    type: object
+    properties:
+      customer_id:
+        type: string
+      customer_email:
+        type: string
+      shipping_info:
+        type: object
+      billing_info:
+        type: string
+    required:
+      - customer_id
+    example:
+      customer_id: '01874548202'
+      customer_email: john.doe@disneyland.net
+        
+  payment_info:
+    type: object
+    properties:
+      amount:
+        type: number
+      currency:
+        type: string
+      payment_method_id:
+        type: string
+      payment_info_reference_id:
+        type: string
+      payment_card_encrypted:
+        type: string
+      save_payment_card:
+        type: boolean
+    example:
+      amount: 280.00
+      currency: 'GBP'
+      payment_method_id: 'CREDIT_CARD'
+      payment_info_reference_id: 2
+      payment_card_encrypted: 'adyenjs_0_1_19$RAwn2Mq5Pg...'
+      save_payment_card: true
+  
+  hal_payment_cards:
+    type: object
+    allOf:
+      - $ref: '#/definitions/hal_resource'
+      - $ref: '#/definitions/payment_card'
+    example:
+      _links:
+        self:
+          href: '/payments/customer/012836454/cards'
+      _embedded:
+        cards:
+          - $ref: '#/definitions/payment_card/example'
+    
+        
+  payment_card:
+    type: object
+    properties:
+      payment_info_reference_id:
+        type: string
+      number:
+        type: string
+      holder:
+        type: string
+      card_type:
+        type: string
+      expiration_month:
+        type: number
+      expiration_year:
+        type: number
+    example:
+      payment_card:
+        payment_info_reference_id: 2
+        number: '*****1111111'
+        holder: 'John Doe'
+        card_type: 'VISA'
+        expiration_month: 1
+        expiration_year: 2021
+        
+        
+  3d_secure_hal:
+    type: object
+    allOf:
+      - $ref: '#/definitions/hal_resource'
+      - $ref: '#/definitions/3d_secure'
+    example:
+      _links:
+        self:
+          href: 'basket/AEX93JGDDH39472/order'
+      _embedded:
+        3d_secure: 
+          $ref: '#/definitions/3d_secure/example'
+  
+  3d_secure:
+    type: object
+    properties:
+      is_3d_secure:
+        type: boolean
+      3d_secure_base64_html:
+        type: string
+    example:
+      is_3d_secure: true
+      3d_secure_base64_html: 'PCFET0NUWVBFIGh0bWwgUFVCTElDICItLy9XM0MvL0R...'
+      
+  order_hal:
+    type: object
+    allOf:
+      - $ref: '#/definitions/hal_resource'
+      - $ref: '#/definitions/order'
+    properties:
+      order:
+        type: object
+    example:
+      _links:
+        self:
+          href: '/orders/ANL923470238946'
+        visual_image:
+          href: '/orders/ANL923470238946/visual'
+        help:
+          href: '/orders/ANL923470238946/help'
+      _embedded:
+        $ref: '#/definitions/order/example'
+  
+  order:
+    type: object
+    properties:
+      order_number:
+        type: string
+      expected_delivery:
+        type: string
+      delivery_status:
+        type: string
+        enum:
+          - placed
+          - sent
+          - received
+      details:
+        type: object
+        properties:
+          customer_info:
+            type: object
+          shipping_info:
+            type: object
+          billing_info:
+            type: object
+          voucher:
+            type: object
+            properties:
+              code:
+                type: string
+              value:
+                type: number
+              description:
+                type: string
+          order_items:
+            type: array
+    example:
+      order_number: 'ANL923470238946'
+      voucher:
+        code: 'BX18-CEUS-3213-1234-1234'
+        value: -80
+        description: '20% OFF all articles'
+      customer_info:
+        $ref: '#/definitions/customer_info/example'
+      shipping_info:
+        $ref: '#/definitions/shipping_info/example'
+      billing_info:
+        $ref: '#/definitions/billing_info/example'
+      payment_info:
+        $ref: '#/definitions/payment_info/example'
+      order_items:
+      - $ref: '#/definitions/basket_item_hal/example'
+
+  
+  basket_creation:
+    type: object
+    properties:
+      customer_info:
+        type: object
+      shipping_info:
+        type: object
+      billing_info:
+        type: object
+      items:
+        type: array
+    required:
+      - customer_info
+    example:
+      customer_info:
+        $ref: '#/definitions/customer_info/example'
+      shipping_info:
+        $ref: '#/definitions/shipping_info/example'
+      billing_info:
+        $ref: '#/definitions/billing_info/example'
+      payment_info:
+        $ref: '#/definitions/payment_info/example'
+      items:
+      - $ref: '#/definitions/basket_item/example'
+    
+  basket_item_hal:
+    type: object
+    allOf:
+      - $ref: '#/definitions/hal_resource'
+      - $ref: '#/definitions/basket_item'
+    example:
+      _links:
+        self:
+          href: '/basket/AEX93JGDDH39472/items/7d9124c67c03f9819a3d627a29'
+        thumbnail:
+          href: 'http://demandware.edgesuite.net/sits_pod14-adidas/dw/image/v2/aagl_prd/on/demandware.static/-/Sites-adidas-products/default/dw359704e0/zoom/BA7252_01_standard.jpg?sw=60&sfrm=jpg'
+        product:
+          href: 'products/BY2775'
+        model:
+          href: '/products?model_number=BEU79'
+        variations:
+          href: 'products/BY2775/variations'
+      _embedded:
+        item_id: '7d9124c67c03f9819a3d627a29'
+        variation_product_id: 'BY2775_530'
+        product_id: 'BY2775'
+        product_name: 'NMD_R1 Shoes'
+        model_number: 'BEU79'
+        gender: 'Woman'
+        color1_hex: '#5942f4'
+        color2_hex: '#f4e241'
+        color_name: 'Core Red/Core Black/Footwear White'
+        no_discount_disclaimer: 'Excluded from promos'
+        out_of_stock: false
+        out_of_stock_all_sizes: false
+        out_of_stock_all_colors: false
+        low_on_stock_message: 'Only 3 left!'
+        size: '3.5'
+        quantity: 1
+        current_price: 280
+    
+  basket_item:
+    type: object
+    properties:
+      item_id:
+        type: number
+      variation_product_id:
+        type: string
+      product_id:
+        type: string
+      product_name:
+        type: string
+      model_number:
+        type: string
+      gender:
+        type: string
+      size:
+        type: number
+      color_name:
+        type: string
+      color1_hex:
+        type: string
+      color2_hex:
+        type: string
+      quantity:
+        type: number
+      current_price:
+        type: number
+      original_price:
+        type: number
+      no_discount_disclaimer:
+        type: string
+      low_on_stock_message:
+        type: string
+      out_of_stock:
+        type: boolean
+      out_of_stock_all_sizes:
+        type: boolean
+      out_of_stock_all_colors:
+        type: boolean
+    required:
+      - variation_product_id
+      - quantity
+    example:
+      variation_product_id: 'BY2775_530'
+      quantity: 1
+  
+  # HAL Wrapper
+  hal_basket:
+    type: object
+    allOf:
+      - $ref: '#/definitions/hal_resource'
+      - $ref: '#/definitions/basket'
+    example:
+      _links:
+        self:
+          href: /basket/AEX93JGDDH39472
+        items:
+          href: /basket/AEX93JGDDH39472/items
+        voucher:
+          href: /basket/AEX93JGDDH39472/voucher
+        out_of_stock_remove:
+          href: /basket/AEX93JGDDH39472/items/out-of-stock
+        delivery_terms_and_conditions:
+          href: /terms-and-conditions
+        return_policy:
+          href: /return-policy
+      _embedded:
+        $ref: '#/definitions/basket/example'
+
+  # Basket
+  basket:
+    type: object
+    allOf:
+      - $ref: '#/definitions/basket_creation'
+    properties:
+      basket_id:
+        type: string
+      total_number_of_items:
+        type: number
+      shipping_costs_messages:
+        type: array
+      total_price:
+        type: number
+      vat:
+        type: number
+      shipping_time_message:
+        type: string
+      info_details:
+        type: array
+      usps_messages:
+        type: array
+      currency:
+        type: string
+      out_of_stock_message:
+        type: string
+      voucher:
+        type: object
+        properties:
+          code:
+            type: string
+          status:
+            type: string
+          is_valid:
+            type: boolean
+          value:
+            type: number
+          description:
+            type: string
+    required:
+      - total_number_of_items
+      - shipping_costs_messages
+      - total_price
+      - shipping_time_message
+      - currency
+      - customer_info
+      - shipping_info
+      - billing_info
+      - payment_info
+    example:
+      basket_id: 'AEX93JGDDH39472'
+      total_count_of_items: 1
+      shipping_costs_messages: 
+        - 'incl. SHIPPING 5 GBP'
+        - 'incl. BTW 7.8'
+      usps_messages:
+        - 'Free Returns'
+      currency: 'GBP'
+      total_price: 280.00
+      vat: 7.20
+      info_details:
+        - title: 'FREE SHIPPING ON ORDERS OVER 50 GBP'
+          text: 'Expect delivery within 3 business days'
+          type: 'shipping'
+        - title: 'FREE RETURNS WITHIN 100 DAYS'
+          text: 'Customised products cannot be returned.'
+          type: 'returns'
+      out_of_stock_message: '2 items are sold out'
+      voucher:
+        code: 'BX18-CEUS-3213-1234-1234'
+        status: 'applied'
+        is_valid: true
+        value: -80
+        description: '20% OFF all articles'
+      customer_info:
+        $ref: '#/definitions/customer_info/example'
+      shipping_info:
+        $ref: '#/definitions/shipping_info/example'
+      billing_info:
+        $ref: '#/definitions/billing_info/example'
+      payment_info:
+        $ref: '#/definitions/payment_info/example'
+      items:
+        - $ref: '#/definitions/basket_item_hal/example' 
+
+  # Basket Not Found Error
+  basket_not_found:
+    type: object
+    allOf:
+      - $ref: '#/definitions/problem_detail'
+    example:
+      title: 'Not Found'
+      detail: 'Cannot find the requested basket'
+      status: 404
+      instance: '/basket/AEX93JGDDH39472'
+
+  # Item Not Found Error
+  item_not_found:
+    type: object
+    allOf:
+      - $ref: '#/definitions/problem_detail'
+    example:
+      title: 'Not Found'
+      detail: 'Cannot find the specified item'
+      status: 404
+      instance: '/basket/AEX93JGDDH39472/items/7d9124c67c03f9819a3d627a29'
+      
+    # Item Not Found Error
+  cards_not_found:
+    type: object
+    allOf:
+      - $ref: '#/definitions/problem_detail'
+    example:
+      title: 'Not Found'
+      detail: 'Cannot find the cards for specified customer'
+      status: 404
+      instance: '/payment/customer/01874548202/cards'
+  
+  order_not_found:
+    type: object
+    allOf:
+      - $ref: '#/definitions/problem_detail'
+    example:
+      title: 'Not Found'
+      detail: 'Cannot find the requested order for provided order_number'
+      status: 404
+      instance: '/orders/ANL923470238946'  
+      
+  #
+  # -- DO NOT EDIT BEYOND THIS POINT --
+  #
+
+  # Media Types Definitions
+
+  #
+  # application/problem+json
+  #
+  problem_detail:
+    type: object
+    properties:
+      type:
+        type: string
+      title:
+        type: string
+      status:
+        type: number
+      detail:
+        type: string
+      instance:
+        type: string
+    required:
+      - title
+      - detail
+
+  #
+  # application/hal+json defintion
+  #
+  hal_link_object:
+    type: object
+    required:
+      - href
+    properties:
+      href:
+        type: string
+      templated:
+        type: boolean
+      type:
+        type: string
+      deprecation:
+        type: string
+      name:
+        type: string
+      profile:
+        type: string
+      title:
+        type: string
+      hreflang:
+        type: string
+
+  hal_curies_link:
+    title: HAL Curies Link
+    allOf:
+      - type: object
+        properties:
+          templated:
+            enum:
+              - true
+        required:
+          - templated
+      - $ref: '#/definitions/hal_link_object'
+
+  hal_resource:
+    title: HAL Resource Object
+    type: object
+    properties:
+      _links:
+        type: object
+        additionalProperties:
+          # WARN: Should be "anyOf" but "anyOf" isn't supported in Swagger 2.0
+          allOf:
+            - $ref: '#/definitions/hal_link_object'
+            - type: array
+              items:
+                - $ref: '#/definitions/hal_link_object'
+        properties:
+          curies:
+            # WARN: Should be "anyOf" but "anyOf" isn't supported in Swagger 2.0
+            allOf:
+              - $ref: '#/definitions/hal_curies_link'
+              - type: array
+                items:
+                  - $ref: '#/definitions/hal_curies_link'
+      _embedded:
+        type: object
+        additionalProperties: true
+        # WARN: Apiary doesn't support circular references
+        # additionalProperties:
+        #   anyOf:
+        #     - $ref: '#/definitions/hal_resource'
+        #     - type: array
+        #       items:
+        #         - $ref: '#/definitions/hal_resource'
