@@ -822,34 +822,49 @@ export default class Parser {
 
     examples = _.omit(examples, 'schema');
 
-    _.forEach(examples, (responseBody, contentType) => {
-      const transaction = this.createTransaction(transition, method, schemes);
+    const consumes = methodValue.consumes || this.swagger.consumes || [];
+    const produces = methodValue.produces || this.swagger.produces || [];
 
-      this.handleSwaggerExampleRequest(transaction, methodValue, transitionParams, resourceParams);
-      this.handleSwaggerExampleResponse(transaction, methodValue, responseValue,
-                                        statusCode, responseBody, contentType);
+    let jsonConsumes = _.filter(consumes, isJsonContentType);
+    let jsonProduces = _.filter(produces, isJsonContentType);
+
+    if (!jsonProduces.length) {
+      jsonProduces = jsonProduces.concat(null);
+    }
+
+    if (!jsonConsumes.length) {
+      jsonConsumes = jsonConsumes.concat(null);
+    }
+
+    _.forEach(examples, (responseBody, contentType) => {
+      _.forEach(jsonConsumes, (consume) => {
+        _.forEach(jsonProduces, (produce) => {
+          const transaction = this.createTransaction(transition, method, schemes);
+
+          this.handleSwaggerExampleRequest(transaction, methodValue, transitionParams,
+                                            resourceParams, produce, consume);
+          this.handleSwaggerExampleResponse(transaction, methodValue, responseValue,
+                                            statusCode, responseBody, contentType, produce);
+        });
+      });
     });
   }
 
   // Convert a Swagger example into a Refract request.
-  handleSwaggerExampleRequest(transaction, methodValue, transitionParams, resourceParams) {
+  handleSwaggerExampleRequest(
+    transaction, methodValue, transitionParams,
+    resourceParams, produce, consume,
+  ) {
     const request = transaction.request;
 
     this.withPath(() => {
-      // Check if json is in consumes
-      const consumes = methodValue.consumes || this.swagger.consumes || [];
-      const produces = methodValue.produces || this.swagger.produces || [];
-
-      const jsonConsumesContentType = _.find(consumes, isJsonContentType);
-      const jsonProducesContentType = _.find(produces, isJsonContentType);
-
       // Add content-type headers
-      if (jsonConsumesContentType) {
-        pushHeader('Content-Type', jsonConsumesContentType, request, this, 'consumes-content-type');
+      if (consume) {
+        pushHeader('Content-Type', consume, request, this, 'consumes-content-type');
       }
 
-      if (jsonProducesContentType) {
-        pushHeader('Accept', jsonProducesContentType, request, this, 'produces-accept');
+      if (produce) {
+        pushHeader('Accept', produce, request, this, 'produces-accept');
       }
 
       const formParams = [];
@@ -879,8 +894,8 @@ export default class Parser {
                 }
 
                 this.withPath('schema', () => {
-                  if (jsonConsumesContentType) {
-                    bodyFromSchema(param.schema, request, this, jsonConsumesContentType);
+                  if (consume) {
+                    bodyFromSchema(param.schema, request, this, consume);
                   }
 
                   this.pushSchemaAsset(param.schema, request, this.path);
@@ -963,7 +978,7 @@ export default class Parser {
   // Convert a Swagger example into a Refract response.
   handleSwaggerExampleResponse(
     transaction, methodValue, responseValue,
-    statusCode, responseBody, contentType,
+    statusCode, responseBody, contentType, produce,
   ) {
     const { Asset, Copy } = this.minim.elements;
     const response = transaction.response;
@@ -984,11 +999,8 @@ export default class Parser {
         });
       }
 
-      const produces = methodValue.produces || this.swagger.produces || [];
-      const jsonProducesContentType = _.find(produces, isJsonContentType);
-
-      if (jsonProducesContentType) {
-        pushHeader('Content-Type', jsonProducesContentType, response, this, 'produces-content-type');
+      if (produce) {
+        pushHeader('Content-Type', produce, response, this, 'produces-content-type');
       }
 
       if (responseValue.headers) {
@@ -1038,8 +1050,8 @@ export default class Parser {
           }
 
           this.withSlicedPath(...args.concat([() => {
-            if (jsonProducesContentType !== undefined && responseBody === undefined) {
-              bodyFromSchema(schema, response, this, jsonProducesContentType);
+            if (produce !== null && responseBody === undefined) {
+              bodyFromSchema(schema, response, this, produce);
             }
 
             this.pushSchemaAsset(schema, response, this.path);
