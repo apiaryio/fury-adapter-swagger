@@ -1,3 +1,9 @@
+# 0.13.5
+
+## Enhancements
+
+- Added support for multiple produces and consumes values.
+
 # 0.13.4
 
 ## Enhancements
