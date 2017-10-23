@@ -106,7 +106,12 @@ export default class Parser {
       },
     };
 
-    return swaggerParser.validate(loaded, swaggerOptions, (err) => {
+    // Swagger parser is mutating the given input and dereferencing.
+    // Let's give it no changes to screw the original and give it a deep copy
+    const swaggerParserInput = JSON.parse(JSON.stringify(loaded));
+    this.loaded = loaded;
+
+    return swaggerParser.validate(swaggerParserInput, swaggerOptions, (err) => {
       const swagger = swaggerParser.api;
       this.swagger = swaggerParser.api;
 
@@ -182,6 +187,12 @@ export default class Parser {
           this.handleSwaggerVendorExtensions(this.api, swagger.paths);
           return done(null, this.result);
         };
+
+        if (loaded.definitions) {
+          this.withPath('definitions', () => {
+            this.handleSwaggerDefinitions(loaded.definitions);
+          });
+        }
 
         // Swagger has a paths object to loop through that describes resources
         // We will run each path on it's own tick since it may take some time
@@ -605,6 +616,32 @@ export default class Parser {
     this.handleSwaggerSecurity(methodValue.security, schemes);
 
     return schemes;
+  }
+
+  handleSwaggerDefinitions(definitions) {
+    const { Category } = this.minim.elements;
+    const generator = new DataStructureGenerator(this.minim);
+    const dataStructures = new Category();
+    dataStructures.classes.push('dataStructures');
+
+    for (const definition in definitions) {
+      this.withPath(definition, () => {
+        const schema = definitions[definition];
+
+        try {
+          const dataStructure = generator.generateDataStructure(schema);
+          dataStructure.id = definition;
+
+          this.createSourceMap(dataStructure, this.path);
+
+          dataStructures.push(dataStructure);
+        } catch (error) {
+          console.error(error);
+        }
+      });
+    }
+
+    this.api.push(dataStructures);
   }
 
   // Convert a Swagger path into a Refract resource.
@@ -1456,9 +1493,11 @@ export default class Parser {
     }
 
     if (handledSchema) {
+      // can we find the schema?
+      const schemy = _.at(this.loaded, this.path);
       try {
         const generator = new DataStructureGenerator(this.minim);
-        const dataStructure = generator.generateDataStructure(schema);
+        const dataStructure = generator.generateDataStructure(schemy);
         if (dataStructure) {
           payload.content.push(dataStructure);
         }
