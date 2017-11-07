@@ -27,7 +27,7 @@
     "z-schema": "^3.16.1"
   },
   "peerDependencies": {
-    "fury": "3.0.0-beta.4"
+    "fury": "3.0.0-beta.5"
   },
   "devDependencies": {
     "babel-plugin-array-includes": "^2.0.3",
