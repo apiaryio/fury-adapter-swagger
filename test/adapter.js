@@ -9,6 +9,7 @@
 import fs from 'fs';
 import path from 'path';
 import glob from 'glob';
+import { safeDump } from 'js-yaml';
 import fury from 'fury';
 import swaggerZoo from 'swagger-zoo';
 import { expect } from 'chai';
@@ -81,7 +82,7 @@ describe('Swagger 2.0 adapter', () => {
   });
 
   context('can parse Swagger object', () => {
-    const source = { swagger: '2.0', info: { title: 'Test', version: '1.0' } };
+    const source = safeDump({ swagger: '2.0', info: { title: 'Test', version: '1.0' } });
     let result;
 
     before((done) => {

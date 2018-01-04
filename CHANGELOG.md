@@ -1,3 +1,10 @@
+# Master
+
+## Breaking
+
+- The adapter will no longer accept JavaScript object as a source document. The
+  source must be a YAML or JSON string.
+
 # 0.16.1
 
 ## Bug Fixes
