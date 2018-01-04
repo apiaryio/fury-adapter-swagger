@@ -3,6 +3,7 @@
  * Tests for Swagger adapter.
  */
 
+import { safeDump } from 'js-yaml';
 import fury from 'fury';
 import { expect } from 'chai';
 import adapter from '../src/adapter';
@@ -10,7 +11,7 @@ import adapter from '../src/adapter';
 fury.adapters = [adapter];
 
 function doParse(source, done, expectations) {
-  fury.parse({ source }, (err, output) => {
+  fury.parse({ source: safeDump(source) }, (err, output) => {
     if (err) {
       return done(err);
     }
