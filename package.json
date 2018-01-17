@@ -21,7 +21,7 @@
     "js-yaml": "^3.4.2",
     "json-schema-faker": "^0.4.0",
     "lodash": "^4.15.0",
-    "swagger-parser": "^3.3.0",
+    "swagger-parser": "^4.0.2",
     "yaml-js": "^0.2.3",
     "media-typer": "^0.3.0",
     "z-schema": "^3.16.1"
