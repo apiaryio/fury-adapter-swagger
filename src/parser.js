@@ -63,10 +63,9 @@ export default class Parser {
 
     this.result = new ParseResult();
 
-    // First, we load the YAML if it is a string, and handle any errors.
     let loaded;
     try {
-      loaded = _.isString(this.source) ? yaml.safeLoad(this.source) : this.source;
+      loaded = yaml.safeLoad(this.source);
     } catch (err) {
       // Temporarily disable generateSourceMap while handling error
       // This is because while handling this error we may try to generate
