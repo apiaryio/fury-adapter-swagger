@@ -103,7 +103,7 @@ export default class Parser {
     // Next, we dereference and validate the loaded Swagger object. Any schema
     // violations get converted into annotations with source maps.
     const swaggerOptions = {
-      $refs: {
+      resolve: {
         external: false,
       },
     };
@@ -1559,4 +1559,3 @@ export default class Parser {
     });
   }
 }
-
