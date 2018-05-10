@@ -174,6 +174,7 @@ export default class Parser {
         this.handleSwaggerInfo();
         this.handleSwaggerHost();
         this.handleSwaggerAuth();
+        this.handleSwaggerVendorExtensions(this.api, this.swagger);
 
         this.handleExternalDocs(this.api, swagger.externalDocs);
 
