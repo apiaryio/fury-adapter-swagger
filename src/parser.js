@@ -341,6 +341,18 @@ export default class Parser {
           });
         }
 
+        if (this.swagger.info.version) {
+          this.withPath('version', () => {
+            this.api.attributes.set('version', this.swagger.info.version);
+
+            if (this.generateSourceMap) {
+              this.createSourceMap(this.api.attributes.get('version'), this.path);
+            }
+
+            return this.api.attributes.get('version');
+          });
+        }
+
         this.handleSwaggerVendorExtensions(this.api, this.swagger.info);
       });
     }
