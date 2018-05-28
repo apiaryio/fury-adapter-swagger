@@ -1,3 +1,8 @@
+# 0.18.5
+
+- Updates fury to 3.0.0-beta.7
+- Updates minim to 0.20.5
+
 # 0.18.4
 
 ## Enhancements
