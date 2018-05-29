@@ -174,7 +174,7 @@ export default class Parser {
         this.handleSwaggerInfo();
         this.handleSwaggerHost();
         this.handleSwaggerAuth();
-        this.handleSwaggerVendorExtensions(this.api, this.swagger);
+        this.handleSwaggerVendorExtensions(this.api, this.swagger, 'root');
 
         this.handleExternalDocs(this.api, swagger.externalDocs);
 
@@ -182,7 +182,7 @@ export default class Parser {
         this.validateConsumes(this.swagger.consumes);
 
         const complete = () => {
-          this.handleSwaggerVendorExtensions(this.api, swagger.paths);
+          this.handleSwaggerVendorExtensions(this.api, swagger.paths, 'paths');
           return done(null, this.result);
         };
 
@@ -342,7 +342,7 @@ export default class Parser {
           });
         }
 
-        this.handleSwaggerVendorExtensions(this.api, this.swagger.info);
+        this.handleSwaggerVendorExtensions(this.api, this.swagger.info, 'info');
       });
     }
   }
@@ -688,7 +688,7 @@ export default class Parser {
   }
 
   // Converts all unknown Swagger vendor extensions from an object into a API Element extension
-  handleSwaggerVendorExtensions(element, object) {
+  handleSwaggerVendorExtensions(element, object, fragment) {
     const extensions = _.chain(object)
       .pickBy(isExtension)
       .omit('x-description', 'x-summary', 'x-group-name')
@@ -699,7 +699,12 @@ export default class Parser {
 
       const profileLink = new Link();
       profileLink.relation = 'profile';
-      profileLink.href = 'https://help.apiary.io/profiles/api-elements/vendor-extensions/';
+
+      if (fragment) {
+        profileLink.href = `https://help.apiary.io/profiles/api-elements/vendor-extensions/#${fragment}`;
+      } else {
+        profileLink.href = 'https://help.apiary.io/profiles/api-elements/vendor-extensions/';
+      }
 
       const extension = new Extension(extensions);
       extension.links = [profileLink];

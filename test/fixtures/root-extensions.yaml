@@ -4,3 +4,5 @@ info:
   title: Root Extensions
   x-info-extension: Info Extension
 x-root-extension: Root Extension
+paths:
+  x-paths-extension: Paths Extension

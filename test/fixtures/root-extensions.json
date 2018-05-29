@@ -34,7 +34,7 @@
                     },
                     "href": {
                       "element": "string",
-                      "content": "https://help.apiary.io/profiles/api-elements/vendor-extensions/"
+                      "content": "https://help.apiary.io/profiles/api-elements/vendor-extensions/#info"
                     }
                   }
                 }
@@ -60,7 +60,7 @@
                     },
                     "href": {
                       "element": "string",
-                      "content": "https://help.apiary.io/profiles/api-elements/vendor-extensions/"
+                      "content": "https://help.apiary.io/profiles/api-elements/vendor-extensions/#root"
                     }
                   }
                 }
@@ -69,6 +69,32 @@
           },
           "content": {
             "x-root-extension": "Root Extension"
+          }
+        },
+        {
+          "element": "extension",
+          "meta": {
+            "links": {
+              "element": "array",
+              "content": [
+                {
+                  "element": "link",
+                  "attributes": {
+                    "relation": {
+                      "element": "string",
+                      "content": "profile"
+                    },
+                    "href": {
+                      "element": "string",
+                      "content": "https://help.apiary.io/profiles/api-elements/vendor-extensions/#paths"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "content": {
+            "x-paths-extension": "Paths Extension"
           }
         }
       ]
