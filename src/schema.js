@@ -2,6 +2,7 @@
 
 import _ from 'lodash';
 
+// TODO
 /*
  * Data Structure Generator
  * Generates a dataStructure element from a JSON schema.
@@ -193,6 +194,7 @@ export default class DataStructureGenerator {
       Boolean: BooleanElement,
       Null: NullElement,
       Enum: EnumElement,
+      Ref: RefElement,
     } = this.minim.elements;
 
     const typeGeneratorMap = {
@@ -205,7 +207,10 @@ export default class DataStructureGenerator {
 
     let element;
 
-    if (schema.enum) {
+    if (schema['$ref']) {
+      const id = schema['$ref'].replace('#/definitions/', '');
+      element = new RefElement(id);
+    } else if (schema.enum) {
       element = this.generateEnum(schema);
     } else if (schema.type === 'array') {
       element = this.generateArray(schema);

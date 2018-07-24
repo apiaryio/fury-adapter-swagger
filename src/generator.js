@@ -12,12 +12,12 @@ faker.option({
   maxLength: 256,
 });
 
-export function bodyFromSchema(schema, payload, parser, contentType = 'application/json') {
+export function bodyFromSchema(schema, refs, payload, parser, contentType = 'application/json') {
   const { Asset } = parser.minim.elements;
   let asset = null;
 
   try {
-    let body = schema.example || faker(schema);
+    let body = schema.example || faker(schema, refs);
 
     if (typeof body !== 'string') {
       if (isFormURLEncoded(contentType)) {

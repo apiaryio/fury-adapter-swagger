@@ -44,7 +44,6 @@ export default class Parser {
     // Global scheme requirements
     this.globalSchemes = [];
 
-    // Loaded, dereferenced Swagger API
     this.swagger = null;
     // Refract parse result
     this.result = null;
@@ -101,11 +100,12 @@ export default class Parser {
       loaded.paths = {};
     }
 
-    // Next, we dereference and validate the loaded Swagger object. Any schema
+    // Next, we validate the loaded Swagger object. Any schema
     // violations get converted into annotations with source maps.
     const swaggerOptions = {
       $refs: {
         external: false,
+        internal: false,
       },
     };
 
@@ -184,6 +184,12 @@ export default class Parser {
           this.handleSwaggerVendorExtensions(this.api, swagger.paths);
           return done(null, this.result);
         };
+
+        if (swagger.definitions) {
+          this.withPath('definitions', () => {
+            this.handleSwaggerDefinitions(swagger.definitions);
+          });
+        }
 
         // Swagger has a paths object to loop through that describes resources
         // We will run each path on it's own tick since it may take some time
@@ -614,6 +620,32 @@ export default class Parser {
     this.handleSwaggerSecurity(methodValue.security, schemes);
 
     return schemes;
+  }
+
+  handleSwaggerDefinitions(definitions) {
+    const { Category } = this.minim.elements;
+    const generator = new DataStructureGenerator(this.minim);
+    const dataStructures = new Category();
+    dataStructures.classes.push('dataStructures');
+
+    for (const definition in definitions) {
+      this.withPath(definition, () => {
+        const schema = definitions[definition];
+
+        try {
+          const dataStructure = generator.generateDataStructure(schema);
+          dataStructure.id = definition;
+
+          this.createSourceMap(dataStructure, this.path);
+
+          dataStructures.push(dataStructure);
+        } catch (error) {
+          console.error(error);
+        }
+      });
+    }
+
+    this.api.push(dataStructures);
   }
 
   // Convert a Swagger path into a Refract resource.
@@ -1109,7 +1141,12 @@ export default class Parser {
 
           this.withSlicedPath(...args.concat([() => {
             if (isJsonResponse && responseBody === undefined) {
-              bodyFromSchema(schema, response, this, contentType);
+              const refs = [];
+
+              for (const definition of this.swagger.definitions) {
+                  // what was here?
+              }
+              bodyFromSchema(schema, refs, response, this, contentType);
             }
 
             this.pushSchemaAsset(schema, response, this.path);
@@ -1471,28 +1508,21 @@ export default class Parser {
   pushSchemaAsset(schema, payload, path) {
     let handledSchema = false;
 
-    try {
-      const jsonSchema = convertSchema(schema);
-      const Asset = this.minim.getElementClass('asset');
-      const schemaAsset = new Asset(JSON.stringify(jsonSchema));
+    const jsonSchema = convertSchema(schema, this.swagger);
+    const Asset = this.minim.getElementClass('asset');
+    const schemaAsset = new Asset(JSON.stringify(jsonSchema));
 
-      schemaAsset.classes.push('messageBodySchema');
-      schemaAsset.contentType = 'application/schema+json';
+    schemaAsset.classes.push('messageBodySchema');
+    schemaAsset.contentType = 'application/schema+json';
 
-      if (this.generateSourceMap) {
-        this.createSourceMap(schemaAsset, path);
-      }
-
-      this.handleExternalDocs(schemaAsset, schema.externalDocs);
-
-      payload.content.push(schemaAsset);
-      handledSchema = true;
-    } catch (exception) {
-      this.createAnnotation(
-        annotations.DATA_LOST, path,
-        'Circular references in schema are not yet supported',
-      );
+    if (this.generateSourceMap) {
+      this.createSourceMap(schemaAsset, path);
     }
+
+    this.handleExternalDocs(schemaAsset, schema.externalDocs);
+
+    payload.content.push(schemaAsset);
+    handledSchema = true;
 
     if (handledSchema) {
       try {

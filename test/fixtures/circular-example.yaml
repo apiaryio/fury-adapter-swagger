@@ -16,6 +16,7 @@ paths:
 
 definitions:
   Company:
+    type: object
     properties:
       id:
         type: string
@@ -26,6 +27,7 @@ definitions:
             $ref: '#/definitions/User'
 
   User:
+    type: object
     properties:
       name:
         type: string
