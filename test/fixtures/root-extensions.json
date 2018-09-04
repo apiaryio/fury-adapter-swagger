@@ -1,0 +1,103 @@
+{
+  "element": "parseResult",
+  "content": [
+    {
+      "element": "category",
+      "meta": {
+        "classes": {
+          "element": "array",
+          "content": [
+            {
+              "element": "string",
+              "content": "api"
+            }
+          ]
+        },
+        "title": {
+          "element": "string",
+          "content": "Root Extensions"
+        }
+      },
+      "content": [
+        {
+          "element": "extension",
+          "meta": {
+            "links": {
+              "element": "array",
+              "content": [
+                {
+                  "element": "link",
+                  "attributes": {
+                    "relation": {
+                      "element": "string",
+                      "content": "profile"
+                    },
+                    "href": {
+                      "element": "string",
+                      "content": "https://help.apiary.io/profiles/api-elements/vendor-extensions/#info"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "content": {
+            "x-info-extension": "Info Extension"
+          }
+        },
+        {
+          "element": "extension",
+          "meta": {
+            "links": {
+              "element": "array",
+              "content": [
+                {
+                  "element": "link",
+                  "attributes": {
+                    "relation": {
+                      "element": "string",
+                      "content": "profile"
+                    },
+                    "href": {
+                      "element": "string",
+                      "content": "https://help.apiary.io/profiles/api-elements/vendor-extensions/#root"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "content": {
+            "x-root-extension": "Root Extension"
+          }
+        },
+        {
+          "element": "extension",
+          "meta": {
+            "links": {
+              "element": "array",
+              "content": [
+                {
+                  "element": "link",
+                  "attributes": {
+                    "relation": {
+                      "element": "string",
+                      "content": "profile"
+                    },
+                    "href": {
+                      "element": "string",
+                      "content": "https://help.apiary.io/profiles/api-elements/vendor-extensions/#paths"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "content": {
+            "x-paths-extension": "Paths Extension"
+          }
+        }
+      ]
+    }
+  ]
+}

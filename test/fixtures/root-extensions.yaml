@@ -1,0 +1,8 @@
+swagger: '2.0'
+info:
+  version: 1.0.0
+  title: Root Extensions
+  x-info-extension: Info Extension
+x-root-extension: Root Extension
+paths:
+  x-paths-extension: Paths Extension
