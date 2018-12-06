@@ -170,24 +170,38 @@ export class DataStructureGenerator {
       .value();
   }
 
-  /* Validates that the given schema matches the given type
-   *
+  /**
+   * Retrieve the type from the schema
    * In the case where there is no provided type, the allOf types are matched.
+   * @param {object} schema
+   * @returns {string} type
    */
-  validateSchemaTypes(schema, type) {
-    if (schema.type === type) {
-      return true;
+  typeForSchema(schema) {
+    if (_.isArray(schema.type)) {
+      const types = schema.type.filter(type => type !== 'null');
+
+      if (types.length !== 1) {
+        // Swagger Schema cannot include an array for types, the only way type
+        // is an array is when we've made type an array from `convertSchema`
+        // where a type is wrapped in array with `null` as value for nullable.
+        // Therefore, it is a programtic bug if we meet this error.
+        throw new Error('Schema cannot contain multiple types that are not null');
+      }
+
+      return types[0];
     }
 
     if (schema.type === undefined && schema.allOf && schema.allOf.length > 0) {
-      const schemasWithoutMatchingType = schema.allOf.filter((subschema) => {
-        return !this.validateSchemaTypes(subschema, type);
-      });
+      // Try to infer type from allOf values
+      const allTypes = schema.allOf.map(this.typeForSchema);
+      const uniqueTypes = _.uniq(allTypes);
 
-      return schemasWithoutMatchingType.length === 0;
+      if (uniqueTypes.length === 1) {
+        return uniqueTypes[0];
+      }
     }
 
-    return false;
+    return schema.type;
   }
 
   // Generates an element representing the given schema
@@ -217,6 +231,8 @@ export class DataStructureGenerator {
       return this.generateElement(schema.allOf[0]);
     }
 
+    const type = this.typeForSchema(schema);
+
     let element;
 
     if (schema.$ref) {
@@ -226,14 +242,12 @@ export class DataStructureGenerator {
       return element;
     } else if (schema.enum) {
       element = this.generateEnum(schema);
-    } else if (schema.type === 'array') {
+    } else if (type === 'array') {
       element = this.generateArray(schema);
-    } else if (this.validateSchemaTypes(schema, 'object')) {
+    } else if (type === 'object') {
       element = this.generateObject(schema);
-    } else if (schema.type && typeGeneratorMap[schema.type]) {
-      element = new typeGeneratorMap[schema.type]();
-    } else if (_.isArray(schema.type)) {
-      // TODO: Support multiple `type`
+    } else if (type && typeGeneratorMap[type]) {
+      element = new typeGeneratorMap[type]();
     }
 
     if (element) {

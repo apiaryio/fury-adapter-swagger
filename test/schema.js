@@ -723,6 +723,50 @@ describe('JSON Schema to Data Structure', () => {
     });
   });
 
+  context('multiple type schema', () => {
+    it('null with array', () => {
+      const schema = {
+        type: ['array', 'null'],
+      };
+
+      const dataStructure = schemaToDataStructure(schema);
+
+      expect(dataStructure.element).to.equal('dataStructure');
+      expect(dataStructure.content).to.be.instanceof(ArrayElement);
+    });
+
+    it('null with object', () => {
+      const schema = {
+        type: ['object', 'null'],
+      };
+
+      const dataStructure = schemaToDataStructure(schema);
+
+      expect(dataStructure.element).to.equal('dataStructure');
+      expect(dataStructure.content).to.be.instanceof(ObjectElement);
+    });
+
+    it('null with primitive type', () => {
+      const schema = {
+        type: ['string', 'null'],
+      };
+
+      const dataStructure = schemaToDataStructure(schema);
+
+      expect(dataStructure.element).to.equal('dataStructure');
+      expect(dataStructure.content).to.be.instanceof(StringElement);
+    });
+
+    it('non-null types', () => {
+      const schema = {
+        type: ['string', 'number'],
+      };
+
+      expect(() => schemaToDataStructure(schema))
+        .to.throw('Schema cannot contain multiple types that are not null');
+    });
+  });
+
   it('exposes the schema title', () => {
     const schema = {
       type: 'object',
